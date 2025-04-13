@@ -5,54 +5,367 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>6A1 Gallery</title>
     <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
             text-align: center;
-            background-color: #f4f4f4;
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: slideIn 0.8s ease-out forwards;
         }
+
         h1 {
-            color: #333;
+            color: var(--primary);
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
-        form {
-            margin: 20px auto;
-            padding: 20px;
-            background: #fff;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+        .upload-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 3rem;
+            transition: transform 0.3s ease;
         }
-        input[type="file"] {
-            margin: 10px 0;
+
+        .upload-section:hover {
+            transform: translateY(-5px);
+        }
+
+        .custom-upload {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            margin: 1rem 0;
+        }
+
+        .custom-upload input {
+            opacity: 0;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .upload-btn {
+            background: var(--secondary);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+        }
+
+        .upload-btn i {
+            font-size: 1.2rem;
+        }
+
+        #gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+            padding: 1rem;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        .gallery-img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+            color: var(--primary);
+        }
+
+        .loader {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            #gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .upload-section {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            display: none;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        /* Lightbox Overlay */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            animation: zoomIn 0.3s ease;
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>6A1 Gallery</h1>
-    <p>Mohon upload foto-foto yang mungkin kami tidak punya. Entah itu dari kelas 1-6.</p>
-    
-    <form id="uploadForm">
-        <input type="file" id="fileInput" accept="image/*" required>
-        <button type="submit">Upload</button>
-    </form>
+    <div class="container">
+        <header class="header">
+            <h1>🎓 6A1 Memory Gallery</h1>
+            <p>📸 Share your precious moments from class 1-6</p>
+        </header>
 
-    <div id="gallery"></div>
+        <section class="upload-section">
+            <form id="uploadForm">
+                <div class="custom-upload">
+                    <input type="file" id="fileInput" accept="image/*" required>
+                    <label class="upload-btn" for="fileInput">
+                        <i>📤</i> Choose Photo
+                    </label>
+                </div>
+                <button type="submit" class="upload-btn">
+                    <i>🚀</i> Upload Now
+                </button>
+            </form>
+        </section>
+
+        <div class="loading">
+            <div class="loader"></div>
+            <p>Uploading your memory...</p>
+        </div>
+
+        <div id="gallery"></div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" onclick="this.style.display='none'">
+        <img src="" alt="Enlarged view">
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast"></div>
 
     <script>
+        const IMGBB_API_KEY = '6b3fdfc05a50796def7c8ebdad1a94a3'; // 🔑 Replace with your key
+
+        // DOM Elements
         const form = document.getElementById('uploadForm');
         const gallery = document.getElementById('gallery');
+        const loading = document.querySelector('.loading');
+        const toast = document.querySelector('.toast');
 
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
+        // Show notification
+        function showToast(message, success = true) {
+            toast.textContent = message;
+            toast.style.backgroundColor = success ? 'rgba(46, 204, 113, 0.9)' : 'rgba(231, 76, 60, 0.9)';
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
 
-            if (file) {
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                img.style.width = '200px';
-                img.style.margin = '10px';
-                gallery.appendChild(img);
-                fileInput.value = ''; // Reset input
+        // Lightbox functionality
+        function showLightbox(src) {
+            const lightbox = document.querySelector('.lightbox');
+            lightbox.querySelector('img').src = src;
+            lightbox.style.display = 'flex';
+        }
+
+        // Add image to gallery with animation
+        function addImageToGallery(url) {
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+            
+            const img = document.createElement('img');
+            img.className = 'gallery-img';
+            img.src = url;
+            img.loading = 'lazy';
+            img.onclick = () => showLightbox(url);
+            
+            item.appendChild(img);
+            gallery.prepend(item);
+            
+            // Trigger animation
+            setTimeout(() => {
+                item.style.opacity = 1;
+                item.style.transform = 'translateY(0)';
+            }, 50);
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = document.getElementById('fileInput').files[0];
+            
+            if (!file) return;
+
+            loading.style.display = 'block';
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    addImageToGallery(data.data.url);
+                    showToast('🎉 Photo uploaded successfully!', true);
+                } else {
+                    showToast(`❌ Upload failed: ${data.error.message}`, false);
+                }
+            } catch (error) {
+                showToast(`⚠️ Error: ${error.message}`, false);
+            } finally {
+                loading.style.display = 'none';
+                form.reset();
             }
+        });
+
+        // Intersection Observer for lazy loading
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    observer.unobserve(img);
+                }
+            });
+        });
+
+        // Initialize animations
+        document.querySelectorAll('.gallery-item').forEach(item => {
+            observer.observe(item.querySelector('img'));
         });
     </script>
 </body>
